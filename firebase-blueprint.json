@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Information about the user and their business goals.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "businessName": { "type": "string" },
+        "revenueGoal": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Audit": {
+      "title": "Weekly Audit",
+      "description": "The result of a weekly AI business audit.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "efficiencyScore": { "type": "number" },
+        "classification": {
+          "type": "object",
+          "properties": {
+            "development": { "type": "number", "description": "Percentage of time in AI Development" },
+            "operational": { "type": "number", "description": "Percentage of time in AI Administration" },
+            "strategic": { "type": "number", "description": "Percentage of time in AI Sales/Strategy" }
+          }
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "category": { "type": "string", "enum": ["Развойна", "Оперативна", "Стратегическа"] },
+              "hours": { "type": "number" }
+            }
+          }
+        },
+        "bottlenecks": { "type": "array", "items": { "type": "string" } },
+        "revenueRoadmap": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "startDate", "efficiencyScore", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data."
+    },
+    "/users/{userId}/audits/{auditId}": {
+      "schema": "Audit",
+      "description": "Weekly audit reports for a specific user."
+    }
+  }
+}

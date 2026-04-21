@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // UserProfile Validation
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['email', 'createdAt']) &&
+             data.email is string && data.email.size() <= 256 &&
+             data.createdAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) && isValidUserProfile(request.resource.data) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['businessName', 'revenueGoal']);
+
+      match /audits/{auditId} {
+        // Audit Validation
+        function isValidAudit(data) {
+          return data.keys().hasAll(['userId', 'startDate', 'efficiencyScore', 'createdAt']) &&
+                 data.userId == request.auth.uid &&
+                 data.startDate is timestamp &&
+                 data.efficiencyScore is number &&
+                 data.createdAt == request.time;
+        }
+
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidAudit(request.resource.data);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
